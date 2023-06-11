@@ -42,11 +42,7 @@ impl Nvrtc {
         }
 
         let compile_opts = vec![];
-        let nvrtc_result = nvrtcCompileProgram(
-            program,
-            0,
-            compile_opts.as_ptr(),
-        );
+        let nvrtc_result = nvrtcCompileProgram(program, 0, compile_opts.as_ptr());
         if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
             println!("Compile resuilt: {}", nvrtc_result);
             return Err("Failed: nvrtcCompileProgram");

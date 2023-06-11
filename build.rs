@@ -18,15 +18,15 @@
 extern crate bindgen;
 extern crate die;
 
+use die::die;
 use std::env;
 use std::path::PathBuf;
-use die::die;
 
 fn main() {
-    let cuda_include_dir = env::var("CUDA_INCLUDE_DIR")
-        .unwrap_or_else(|_| die!("CUDA_INCLUDE_DIR is not defined"));
-    let cuda_lib_dir = env::var("CUDA_LIB_DIR")
-        .unwrap_or_else(|_| die!("CUDA_LIB_DIR is not defined"));
+    let cuda_include_dir =
+        env::var("CUDA_INCLUDE_DIR").unwrap_or_else(|_| "/usr/local/cuda/include".to_string());
+    let cuda_lib_dir =
+        env::var("CUDA_LIB_DIR").unwrap_or_else(|_| "/usr/local/cuda/lib64".to_string());
 
     // Tell cargo to look for shared libraries in the specified directory
     println!("cargo:rustc-link-search={cuda_lib_dir}");

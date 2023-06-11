@@ -23,8 +23,6 @@ use nvrust::driver::Driver;
 
 #[test]
 fn test_vector_add() {
-    // let mut device = CUdevice::default();
-    // let mut context = &mut CUctx_st { _unused: [] } as *mut CUctx_st;
     let vector_add_kernel = "
             extern \"C\" __global__ void vector_add(float *a, float *b, float *c) {
                 size_t idx = threadIdx.x;

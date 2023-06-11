@@ -79,11 +79,15 @@ impl Driver {
         return Ok(module);
     }
 
-    pub unsafe fn get_function(module: CudaModule, name: &str) -> Result<CudaFunction, &'static str> {
+    pub unsafe fn get_function(
+        module: CudaModule,
+        name: &str,
+    ) -> Result<CudaFunction, &'static str> {
         let mut kernel = zeroed::<CUfunction>();
         let name_str = CString::new(name).unwrap();
 
-        let cu_result = cuModuleGetFunction(&mut kernel as *mut CUfunction, module, name_str.as_ptr());
+        let cu_result =
+            cuModuleGetFunction(&mut kernel as *mut CUfunction, module, name_str.as_ptr());
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuModuleGetFunction");
         }
@@ -109,11 +113,16 @@ impl Driver {
         shared_memory_bytes: u32,
         stream: CudaStream,
         kernel_params: *mut *mut c_void,
-        extra: *mut *mut c_void) -> Result<(), &'static str> {
+        extra: *mut *mut c_void,
+    ) -> Result<(), &'static str> {
         let cu_result = cuLaunchKernel(
             kernel,
-            num_blocks.0, num_blocks.1, num_blocks.2,
-            num_threads.0, num_threads.1, num_threads.2,
+            num_blocks.0,
+            num_blocks.1,
+            num_blocks.2,
+            num_threads.0,
+            num_threads.1,
+            num_threads.2,
             shared_memory_bytes,
             stream,
             kernel_params,
@@ -137,7 +146,11 @@ impl Driver {
         return Ok(device_ptr);
     }
 
-    pub unsafe fn copy_to_device(device_memory: CudaMemory, host_memory: *const c_void, size: usize) -> Result<(), &'static str> {
+    pub unsafe fn copy_to_device(
+        device_memory: CudaMemory,
+        host_memory: *const c_void,
+        size: usize,
+    ) -> Result<(), &'static str> {
         let cu_result = cuMemcpyHtoD_v2(device_memory, host_memory, size);
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuMemcpyHtoD_v2");
@@ -146,7 +159,11 @@ impl Driver {
         return Ok(());
     }
 
-    pub unsafe fn copy_from_device(host_memory: *mut c_void, device_memory: CudaMemory, size: usize) -> Result<(), &'static str> {
+    pub unsafe fn copy_from_device(
+        host_memory: *mut c_void,
+        device_memory: CudaMemory,
+        size: usize,
+    ) -> Result<(), &'static str> {
         let cu_result = cuMemcpyDtoH_v2(host_memory, device_memory, size);
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuMemcpyDtoH_v2");

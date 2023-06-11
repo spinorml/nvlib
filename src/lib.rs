@@ -23,5 +23,5 @@ pub mod cuda {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
-pub mod nvrtc;
 pub mod driver;
+pub mod nvrtc;
