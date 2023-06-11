@@ -19,12 +19,13 @@ use std::ffi::{c_char, CString};
 use std::mem::zeroed;
 
 use crate::cuda::*;
-use crate::{CudaProgram, CudaPtx};
+
+pub type CudaProgram = nvrtcProgram;
+pub type CudaPtx = Vec<c_char>;
 
 pub struct Nvrtc;
 
 impl Nvrtc {
-
     pub unsafe fn compile_program(name: &str, source: &str) -> Result<CudaProgram, &'static str> {
         let mut program = zeroed::<nvrtcProgram>();
 
@@ -54,15 +55,6 @@ impl Nvrtc {
         return Ok(program);
     }
 
-    pub unsafe fn destroy_program(program: &mut CudaProgram) -> Result<(), &'static str> {
-        let nvrtc_result = nvrtcDestroyProgram(program);
-        if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
-            return Err("Failed: nvrtcDestroyProgram");
-        }
-
-        return Ok(());
-    }
-
     pub unsafe fn get_ptx(program: CudaProgram) -> Result<CudaPtx, &'static str> {
         let mut ptx_size: usize = 0;
         let nvrtc_result = nvrtcGetPTXSize(program, &mut ptx_size as *mut usize);
@@ -77,28 +69,31 @@ impl Nvrtc {
             return Err("Failed: nvrtcGetPTX");
         }
 
-        // let nvrtc_result = nvrtcDestroyProgram((*program) as *mut nvrtcProgram);
-        // if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
-        //     return Err("Failed: nvrtcDestroyProgram");
-        // }
-
         return Ok(buffer);
     }
 
-    pub unsafe fn get_program_log(program: CudaProgram) -> Result<&'static str, &'static str> {
+    pub unsafe fn destroy_program(mut program: CudaProgram) -> Result<(), &'static str> {
+        let nvrtc_result = nvrtcDestroyProgram(&mut program as *mut nvrtcProgram);
+        if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
+            return Err("Failed: nvrtcDestroyProgram");
+        }
+
+        return Ok(());
+    }
+
+    pub unsafe fn get_program_log(program: CudaProgram) -> Result<String, &'static str> {
         let mut log_size: usize = 0;
         let nvrtc_result = nvrtcGetProgramLogSize(program, &mut log_size as *mut usize);
         if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
             return Err("Failed: nvrtcGetProgramLogSize");
         }
 
-        let mut log: Vec<c_char> = vec![0; log_size];
-        let nvrtc_result = nvrtcGetProgramLog(program, log.as_mut_ptr());
+        let mut raw_log: Vec<u8> = vec![0; log_size];
+        let nvrtc_result = nvrtcGetProgramLog(program, raw_log.as_mut_ptr() as *mut c_char);
         if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
-            return Err("Failed: nvrtcGetProgramLogSize");
+            return Err("Failed: nvrtcGetProgramLog");
         }
 
-        println!("\n** Log: {:?}", log);
-        return Ok("Unlnown");
+        return Ok(String::from_utf8(raw_log).unwrap());
     }
 }
