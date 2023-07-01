@@ -16,9 +16,7 @@
  */
 
 extern crate bindgen;
-extern crate die;
 
-use die::die;
 use std::env;
 use std::path::PathBuf;
 
