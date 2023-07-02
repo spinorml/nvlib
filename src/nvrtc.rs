@@ -26,31 +26,43 @@ pub type CudaPtx = Vec<c_char>;
 pub struct Nvrtc;
 
 impl Nvrtc {
-    pub unsafe fn compile_program(name: &str, source: &str) -> Result<CudaProgram, &'static str> {
-        let mut program = zeroed::<nvrtcProgram>();
+    pub fn compile_program(name: &str, source: &str) -> Result<CudaProgram, &'static str> {
+        let mut program = unsafe { zeroed::<nvrtcProgram>() };
 
-        let nvrtc_result = nvrtcCreateProgram(
-            &mut program as *mut nvrtcProgram,
-            CString::new(source).unwrap().as_c_str().as_ptr(),
-            CString::new(name).unwrap().as_c_str().as_ptr(),
-            0,
-            std::ptr::null(),
-            std::ptr::null(),
-        );
+        let nvrtc_result = unsafe {
+            nvrtcCreateProgram(
+                &mut program as *mut nvrtcProgram,
+                CString::new(source).unwrap().as_c_str().as_ptr(),
+                CString::new(name).unwrap().as_c_str().as_ptr(),
+                0,
+                std::ptr::null(),
+                std::ptr::null(),
+            )
+        };
+
         if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
             return Err("Failed: nvrtcCreateProgram");
         }
 
         let compile_opts = vec![];
-        let nvrtc_result = nvrtcCompileProgram(program, 0, compile_opts.as_ptr());
+        let nvrtc_result = unsafe { nvrtcCompileProgram(program, 0, compile_opts.as_ptr()) };
         if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
             println!("Compile resuilt: {}", nvrtc_result);
             return Err("Failed: nvrtcCompileProgram");
         }
 
-        return Ok(program);
+        Ok(program)
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    ///
+    /// # Safety
+    ///
+    /// .
     pub unsafe fn get_ptx(program: CudaProgram) -> Result<CudaPtx, &'static str> {
         let mut ptx_size: usize = 0;
         let nvrtc_result = nvrtcGetPTXSize(program, &mut ptx_size as *mut usize);
@@ -65,18 +77,36 @@ impl Nvrtc {
             return Err("Failed: nvrtcGetPTX");
         }
 
-        return Ok(buffer);
+        Ok(buffer)
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    ///
+    /// # Safety
+    ///
+    /// .
     pub unsafe fn destroy_program(mut program: CudaProgram) -> Result<(), &'static str> {
         let nvrtc_result = nvrtcDestroyProgram(&mut program as *mut nvrtcProgram);
         if nvrtc_result != nvrtcResult_NVRTC_SUCCESS {
             return Err("Failed: nvrtcDestroyProgram");
         }
 
-        return Ok(());
+        Ok(())
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    ///
+    /// # Safety
+    ///
+    /// .
     pub unsafe fn get_program_log(program: CudaProgram) -> Result<String, &'static str> {
         let mut log_size: usize = 0;
         let nvrtc_result = nvrtcGetProgramLogSize(program, &mut log_size as *mut usize);
@@ -90,6 +120,6 @@ impl Nvrtc {
             return Err("Failed: nvrtcGetProgramLog");
         }
 
-        return Ok(String::from_utf8(raw_log).unwrap());
+        Ok(String::from_utf8(raw_log).unwrap())
     }
 }

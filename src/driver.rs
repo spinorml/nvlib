@@ -31,54 +31,65 @@ pub type CudaMemory = CUdeviceptr;
 pub struct Driver;
 
 impl Driver {
-    pub unsafe fn init(device_number: u32) -> Result<(), &'static str> {
-        let cu_result = cuInit(device_number);
+    pub fn init(device_number: u32) -> Result<(), &'static str> {
+        let cu_result = unsafe { cuInit(device_number) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuInit");
         }
 
-        return Ok(());
+        Ok(())
     }
 
-    pub unsafe fn get_device(device_number: u32) -> Result<CudaDevice, &'static str> {
-        let mut device = zeroed::<CUdevice>();
-        let cu_result = cuDeviceGet(&mut device as *mut CUdevice, device_number as i32);
+    pub fn get_device(device_number: u32) -> Result<CudaDevice, &'static str> {
+        let mut device = unsafe { zeroed::<CUdevice>() };
+        let cu_result = unsafe { cuDeviceGet(&mut device as *mut CUdevice, device_number as i32) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuDeviceGet");
         }
 
-        return Ok(device);
+        Ok(device)
     }
 
-    pub unsafe fn create_context(device: CudaDevice) -> Result<CudaContext, &'static str> {
-        let mut context = zeroed::<CUcontext>();
+    pub fn create_context(device: CudaDevice) -> Result<CudaContext, &'static str> {
+        let mut context = unsafe { zeroed::<CUcontext>() };
 
-        let cu_result = cuCtxCreate_v2(&mut context as *mut CUcontext, 0, device);
+        let cu_result = unsafe { cuCtxCreate_v2(&mut context as *mut CUcontext, 0, device) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuCtxCreate_v2");
         }
 
-        return Ok(context);
+        Ok(context)
     }
 
-    pub unsafe fn load_module(ptx: CudaPtx) -> Result<CudaModule, &'static str> {
-        let mut module = zeroed::<CUmodule>();
+    pub fn load_module(ptx: CudaPtx) -> Result<CudaModule, &'static str> {
+        let mut module = unsafe { zeroed::<CUmodule>() };
 
-        let cu_result = cuModuleLoadDataEx(
-            &mut module as *mut CUmodule,
-            ptx.as_ptr() as *const c_void,
-            0,
-            std::ptr::null_mut(),
-            std::ptr::null_mut(),
-        );
+        let cu_result = unsafe {
+            cuModuleLoadDataEx(
+                &mut module as *mut CUmodule,
+                ptx.as_ptr() as *const c_void,
+                0,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+            )
+        };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             println!("Error: {}", cu_result);
             return Err("Failed: cuModuleLoadDataEx");
         }
 
-        return Ok(module);
+        Ok(module)
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    ///
+    /// # Safety
+    ///
+    /// .
     pub unsafe fn get_function(
         module: CudaModule,
         name: &str,
@@ -88,24 +99,34 @@ impl Driver {
 
         let cu_result =
             cuModuleGetFunction(&mut kernel as *mut CUfunction, module, name_str.as_ptr());
+
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuModuleGetFunction");
         }
 
-        return Ok(kernel);
+        Ok(kernel)
     }
 
-    pub unsafe fn create_stream() -> Result<CudaStream, &'static str> {
-        let mut stream = zeroed::<CUstream>();
+    pub fn create_stream() -> Result<CudaStream, &'static str> {
+        let mut stream = unsafe { zeroed::<CUstream>() };
 
-        let cu_result = cuStreamCreate(&mut stream as *mut CUstream, 0);
+        let cu_result = unsafe { cuStreamCreate(&mut stream as *mut CUstream, 0) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuStreamCreate");
         }
 
-        return Ok(stream);
+        Ok(stream)
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    ///
+    /// # Safety
+    ///
+    /// .
     pub unsafe fn launch_kernel(
         kernel: CudaFunction,
         num_blocks: (u32, u32, u32),
@@ -132,20 +153,29 @@ impl Driver {
             return Err("Failed: cuLaunchKernel");
         }
 
-        return Ok(());
+        Ok(())
     }
 
-    pub unsafe fn allocate_memory(size: usize) -> Result<CudaMemory, &'static str> {
-        let mut device_ptr = zeroed::<CUdeviceptr>();
+    pub fn allocate_memory(size: usize) -> Result<CudaMemory, &'static str> {
+        let mut device_ptr = unsafe { zeroed::<CUdeviceptr>() };
 
-        let cu_result = cuMemAlloc_v2(&mut device_ptr as *mut CUdeviceptr, size);
+        let cu_result = unsafe { cuMemAlloc_v2(&mut device_ptr as *mut CUdeviceptr, size) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuMemAlloc_v2");
         }
 
-        return Ok(device_ptr);
+        Ok(device_ptr)
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    ///
+    /// # Safety
+    ///
+    /// .
     pub unsafe fn copy_to_device(
         device_memory: CudaMemory,
         host_memory: *const c_void,
@@ -156,9 +186,18 @@ impl Driver {
             return Err("Failed: cuMemcpyHtoD_v2");
         }
 
-        return Ok(());
+        Ok(())
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    ///
+    /// # Safety
+    ///
+    /// .
     pub unsafe fn copy_from_device(
         host_memory: *mut c_void,
         device_memory: CudaMemory,
@@ -169,15 +208,15 @@ impl Driver {
             return Err("Failed: cuMemcpyDtoH_v2");
         }
 
-        return Ok(());
+        Ok(())
     }
 
-    pub unsafe fn synchronize_context() -> Result<(), &'static str> {
-        let cu_result = cuCtxSynchronize();
+    pub fn synchronize_context() -> Result<(), &'static str> {
+        let cu_result = unsafe { cuCtxSynchronize() };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
             return Err("Failed: cuCtxSynchronize");
         }
 
-        return Ok(());
+        Ok(())
     }
 }
