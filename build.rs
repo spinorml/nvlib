@@ -30,8 +30,7 @@ fn main() {
     println!("cargo:rustc-link-search={cuda_lib_dir}");
     println!("cargo:rustc-link-search={cuda_lib_dir}/stubs");
 
-    // Tell cargo to tell rustc to link the system bzip2
-    // shared library.
+    // Tell cargo to tell rustc to link the cuda and nvrtc libraries
     println!("cargo:rustc-link-lib=nvrtc");
     println!("cargo:rustc-link-lib=cuda");
 

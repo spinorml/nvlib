@@ -31,37 +31,37 @@ pub type CudaMemory = CUdeviceptr;
 pub struct Driver;
 
 impl Driver {
-    pub fn init(device_number: u32) -> Result<(), &'static str> {
+    pub fn init(device_number: u32) -> Result<(), String> {
         let cu_result = unsafe { cuInit(device_number) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuInit");
+            return Err(format!("Failed: cuInit - {cu_result}"));
         }
 
         Ok(())
     }
 
-    pub fn get_device(device_number: u32) -> Result<CudaDevice, &'static str> {
+    pub fn get_device(device_number: u32) -> Result<CudaDevice, String> {
         let mut device = unsafe { zeroed::<CUdevice>() };
         let cu_result = unsafe { cuDeviceGet(&mut device as *mut CUdevice, device_number as i32) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuDeviceGet");
+            return Err(format!("Failed: cuDeviceGet - {cu_result}"));
         }
 
         Ok(device)
     }
 
-    pub fn create_context(device: CudaDevice) -> Result<CudaContext, &'static str> {
+    pub fn create_context(device: CudaDevice) -> Result<CudaContext, String> {
         let mut context = unsafe { zeroed::<CUcontext>() };
 
         let cu_result = unsafe { cuCtxCreate_v2(&mut context as *mut CUcontext, 0, device) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuCtxCreate_v2");
+            return Err(format!("Failed: cuCtxCreate_v2 {cu_result}"));
         }
 
         Ok(context)
     }
 
-    pub fn load_module(ptx: CudaPtx) -> Result<CudaModule, &'static str> {
+    pub fn load_module(ptx: CudaPtx) -> Result<CudaModule, String> {
         let mut module = unsafe { zeroed::<CUmodule>() };
 
         let cu_result = unsafe {
@@ -74,8 +74,7 @@ impl Driver {
             )
         };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            println!("Error: {}", cu_result);
-            return Err("Failed: cuModuleLoadDataEx");
+            return Err(format!("Failed: cuModuleLoadDataEx - {cu_result}"));
         }
 
         Ok(module)
@@ -90,10 +89,7 @@ impl Driver {
     /// # Safety
     ///
     /// .
-    pub unsafe fn get_function(
-        module: CudaModule,
-        name: &str,
-    ) -> Result<CudaFunction, &'static str> {
+    pub unsafe fn get_function(module: CudaModule, name: &str) -> Result<CudaFunction, String> {
         let mut kernel = zeroed::<CUfunction>();
         let name_str = CString::new(name).unwrap();
 
@@ -101,18 +97,18 @@ impl Driver {
             cuModuleGetFunction(&mut kernel as *mut CUfunction, module, name_str.as_ptr());
 
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuModuleGetFunction");
+            return Err(format!("Failed: cuModuleGetFunction - {cu_result}"));
         }
 
         Ok(kernel)
     }
 
-    pub fn create_stream() -> Result<CudaStream, &'static str> {
+    pub fn create_stream() -> Result<CudaStream, String> {
         let mut stream = unsafe { zeroed::<CUstream>() };
 
         let cu_result = unsafe { cuStreamCreate(&mut stream as *mut CUstream, 0) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuStreamCreate");
+            return Err(format!("Failed: cuStreamCreate - {cu_result}"));
         }
 
         Ok(stream)
@@ -135,7 +131,7 @@ impl Driver {
         stream: CudaStream,
         kernel_params: *mut *mut c_void,
         extra: *mut *mut c_void,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), String> {
         let cu_result = cuLaunchKernel(
             kernel,
             num_blocks.0,
@@ -150,18 +146,18 @@ impl Driver {
             extra,
         );
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuLaunchKernel");
+            return Err(format!("Failed: cuLaunchKernel - {cu_result}"));
         }
 
         Ok(())
     }
 
-    pub fn allocate_memory(size: usize) -> Result<CudaMemory, &'static str> {
+    pub fn allocate_memory(size: usize) -> Result<CudaMemory, String> {
         let mut device_ptr = unsafe { zeroed::<CUdeviceptr>() };
 
         let cu_result = unsafe { cuMemAlloc_v2(&mut device_ptr as *mut CUdeviceptr, size) };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuMemAlloc_v2");
+            return Err(format!("Failed: cuMemAlloc_v2 - {cu_result}"));
         }
 
         Ok(device_ptr)
@@ -180,10 +176,10 @@ impl Driver {
         device_memory: CudaMemory,
         host_memory: *const c_void,
         size: usize,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), String> {
         let cu_result = cuMemcpyHtoD_v2(device_memory, host_memory, size);
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuMemcpyHtoD_v2");
+            return Err(format!("Failed: cuMemcpyHtoD_v2 - {cu_result}"));
         }
 
         Ok(())
@@ -202,19 +198,19 @@ impl Driver {
         host_memory: *mut c_void,
         device_memory: CudaMemory,
         size: usize,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), String> {
         let cu_result = cuMemcpyDtoH_v2(host_memory, device_memory, size);
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuMemcpyDtoH_v2");
+            return Err(format!("Failed: cuMemcpyDtoH_v2 - {cu_result}"));
         }
 
         Ok(())
     }
 
-    pub fn synchronize_context() -> Result<(), &'static str> {
+    pub fn synchronize_context() -> Result<(), String> {
         let cu_result = unsafe { cuCtxSynchronize() };
         if cu_result != cudaError_enum_CUDA_SUCCESS {
-            return Err("Failed: cuCtxSynchronize");
+            return Err(format!("Failed: cuCtxSynchronize - {cu_result}"));
         }
 
         Ok(())
