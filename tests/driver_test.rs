@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use std::ffi::{c_void};
+use std::ffi::c_void;
 use std::mem::size_of;
 
-use nvrust::nvrtc::Nvrtc;
-use nvrust::driver::Driver;
+use nvlib::driver::Driver;
+use nvlib::nvrtc::Nvrtc;
 
 #[test]
 fn test_vector_add() {
@@ -67,7 +67,9 @@ fn test_vector_add() {
             shared_mem_bytes,
             stream,
             kernel_params,
-            extra).unwrap();
+            extra,
+        )
+        .unwrap();
 
         Driver::synchronize_context().unwrap();
 
