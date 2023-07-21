@@ -31,8 +31,9 @@ fn main() {
     println!("cargo:rustc-link-search={cuda_lib_dir}/stubs");
 
     // Tell cargo to tell rustc to link the cuda and nvrtc libraries
-    println!("cargo:rustc-link-lib=nvrtc");
     println!("cargo:rustc-link-lib=cuda");
+    println!("cargo:rustc-link-lib=nvrtc");
+    println!("cargo:rustc-link-lib=OpenCL");
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=wrapper.h");
