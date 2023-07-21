@@ -17,5 +17,5 @@
 
 #include "cuda.h"
 #include "nvrtc.h"
-
+#include "CL/opencl.h"
 
